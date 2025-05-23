@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards }
 import { SellersService } from './sellers.service';
 import { CreateSellerDto } from './dto/create-seller.dto';
 import { UpdateSellerDto } from './dto/update-seller.dto';
+import { ApproveSellerDto } from './dto/approve-seller.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -47,5 +48,22 @@ export class SellersController {
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req) {
     return this.sellersService.remove(id, req.user.role);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Get('pending/all')
+  findPendingSellers() {
+    return this.sellersService.findPendingSellers();
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Patch('approve/:id')
+  approveSeller(
+    @Param('id') id: string,
+    @Body() approveSellerDto: ApproveSellerDto,
+  ) {
+    return this.sellersService.approveSeller(id, approveSellerDto);
   }
 } 
