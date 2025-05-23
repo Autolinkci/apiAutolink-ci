@@ -13,7 +13,7 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto) {
-    const { full_name, email, password, phone_number } = registerDto;
+    const { full_name, email, password, phone_number, is_seller, company_name, country } = registerDto;
 
     // Vérifier si l'utilisateur existe déjà
     const userExists = await this.prisma.users.findUnique({
@@ -28,6 +28,9 @@ export class AuthService {
     const salt = await bcrypt.genSalt();
     const password_hash = await bcrypt.hash(password, salt);
 
+    // Déterminer le rôle initial
+    const role = is_seller ? 'pending_seller' : 'client';
+
     // Créer l'utilisateur
     const user = await this.prisma.users.create({
       data: {
@@ -37,6 +40,18 @@ export class AuthService {
         password_hash,
       },
     });
+
+    // Si l'utilisateur s'inscrit en tant que vendeur, créer son profil vendeur
+    if (is_seller) {
+      await this.prisma.sellers.create({
+        data: {
+          user_id: user.id,
+          company_name,
+          country,
+        is_approved:false
+        },
+      });
+    }
 
     // Générer le token JWT
     const token = this.generateToken(user);

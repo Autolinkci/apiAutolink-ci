@@ -8,13 +8,13 @@ generator client {
 }
 
 model users {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   full_name     String
-  email         String   @unique
+  email         String    @unique
   phone_number  String?
-  role          String   @default("client")
+  role          String    @default("client")
   password_hash String
-  created_at    DateTime @default(now())
+  created_at    DateTime  @default(now())
   sellers       sellers?
   orders        orders[]
   testimonials  testimonials[]
@@ -25,23 +25,24 @@ model sellers {
   user_id      String  @unique
   company_name String?
   country      String?
+  is_approved  Boolean @default(false)
   user         users   @relation(fields: [user_id], references: [id])
   vehicles     vehicles[]
 }
 
 model vehicles {
-  id               String   @id @default(uuid())
-  description      String
-  brand            String
-  model            String
-  price            Float
+  id                String         @id @default(uuid())
+  description       String
+  brand             String
+  model             String
+  price             Float
   country_of_origin String
-  images      VehicleImage[]
-  status           String   @default("available")
-  seller_id        String?
-  seller           sellers? @relation(fields: [seller_id], references: [id])
-  orders           orders[]
-  year             Int
+  images            VehicleImage[]
+  status            String         @default("available")
+  seller_id         String?
+  seller            sellers?       @relation(fields: [seller_id], references: [id])
+  orders            orders[]
+  year              Int
 }
 
 model orders {
@@ -57,25 +58,25 @@ model orders {
 }
 
 model order_tracking {
-  id        String   @id @default(uuid())
-  order_id  String
-  status    String
+  id         String   @id @default(uuid())
+  order_id   String
+  status     String
   updated_at DateTime @default(now())
-  order     orders   @relation(fields: [order_id], references: [id])
+  order      orders   @relation(fields: [order_id], references: [id])
 }
 
 model testimonials {
-  id        String   @id @default(uuid())
-  user_id   String
-  message   String
-  rating    Int
+  id         String   @id @default(uuid())
+  user_id    String
+  message    String
+  rating     Int
   created_at DateTime @default(now())
-  user      users     @relation(fields: [user_id], references: [id])
+  user       users    @relation(fields: [user_id], references: [id])
 }
 
 model VehicleImage {
   id        String   @id @default(uuid())
   url       String
   vehicleId String
-  vehicle   vehicles  @relation(fields: [vehicleId], references: [id])
+  vehicle   vehicles @relation(fields: [vehicleId], references: [id])
 }

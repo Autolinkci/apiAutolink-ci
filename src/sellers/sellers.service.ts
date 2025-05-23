@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, ConflictException, ForbiddenException } 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSellerDto } from './dto/create-seller.dto';
 import { UpdateSellerDto } from './dto/update-seller.dto';
+import { ApproveSellerDto } from './dto/approve-seller.dto';
+import { Role } from './dto/role-enum';
 
 @Injectable()
 export class SellersService {
@@ -92,7 +94,7 @@ export class SellersService {
     // Mettre à jour le rôle de l'utilisateur
     await this.prisma.users.update({
       where: { id: user_id },
-      data: { role: 'seller' },
+      data: { role: Role.SELLER },
     });
 
     // Créer le vendeur
@@ -114,7 +116,7 @@ export class SellersService {
     });
   }
 
-  async update(id: string, updateSellerDto: UpdateSellerDto, userId?: string, role?: string) {
+  async update(id: string, updateSellerDto: UpdateSellerDto, userId?: string, userRole?: string) {
     // Vérifier si le vendeur existe
     const seller = await this.prisma.sellers.findUnique({
       where: { id },
@@ -125,7 +127,7 @@ export class SellersService {
     }
 
     // Si l'utilisateur n'est pas admin et n'est pas le vendeur lui-même, interdire
-    if (role !== 'admin' && seller.user_id !== userId) {
+    if (userRole !== Role.ADMIN && seller.user_id !== userId) {
       throw new ForbiddenException('Vous n\'êtes pas autorisé à modifier ce vendeur');
     }
 
@@ -145,9 +147,9 @@ export class SellersService {
     });
   }
 
-  async remove(id: string, role?: string) {
+  async remove(id: string, userRole?: string) {
     // Seul un admin peut supprimer un vendeur
-    if (role !== 'admin') {
+    if (userRole !== Role.ADMIN) {
       throw new ForbiddenException('Vous n\'êtes pas autorisé à supprimer un vendeur');
     }
 
@@ -171,7 +173,7 @@ export class SellersService {
     // Remettre le rôle de l'utilisateur à client
     await this.prisma.users.update({
       where: { id: seller.user_id },
-      data: { role: 'client' },
+      data: { role: Role.CLIENT },
     });
 
     // Supprimer le vendeur
@@ -180,5 +182,74 @@ export class SellersService {
     });
 
     return { message: 'Vendeur supprimé avec succès' };
+  }
+
+  async findPendingSellers() {
+    // Trouver tous les utilisateurs avec le rôle 'pending_seller'
+    const users = await this.prisma.users.findMany({
+      where: { role: Role.PENDING_SELLER },
+      include: {
+        sellers: true,
+      },
+    });
+
+    return users.map(user => ({
+      user_id: user.id,
+      full_name: user.full_name,
+      email: user.email,
+      phone_number: user.phone_number,
+      created_at: user.created_at,
+      role: Role.PENDING_SELLER,
+      seller: user.sellers ? {
+        id: user.sellers.id,
+        company_name: user.sellers.company_name,
+        country: user.sellers.country,
+        is_approved: user.sellers.is_approved,
+      } : null,
+    }));
+  }
+
+  async approveSeller(id: string, approveSellerDto: ApproveSellerDto) {
+    // Vérifier si le vendeur existe
+    const seller = await this.prisma.sellers.findUnique({
+      where: { id },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!seller) {
+      throw new NotFoundException(`Vendeur avec l'ID ${id} non trouvé`);
+    }
+
+    // Mettre à jour le statut d'approbation du vendeur
+    await this.prisma.sellers.update({
+      where: { id },
+      data: { 
+        is_approved: approveSellerDto.is_approved
+      },
+    });
+
+    // Mettre à jour le rôle de l'utilisateur
+    await this.prisma.users.update({
+      where: { id: seller.user_id },
+      data: { 
+        role: approveSellerDto.is_approved ? Role.SELLER : Role.PENDING_SELLER
+      },
+    });
+
+    return {
+      id: seller.id,
+      user_id: seller.user_id,
+      company_name: seller.company_name,
+      country: seller.country,
+      is_approved: approveSellerDto.is_approved,
+      user: {
+        id: seller.user.id,
+        full_name: seller.user.full_name,
+        email: seller.user.email,
+        role: approveSellerDto.is_approved ? Role.SELLER : Role.PENDING_SELLER,
+      },
+    };
   }
 } 
