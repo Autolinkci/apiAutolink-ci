@@ -4,7 +4,9 @@ import { CreateTrackingDto } from './dto/create-tracking.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @Controller('order-tracking')
 export class OrderTrackingController {
   constructor(private orderTrackingService: OrderTrackingService) {}

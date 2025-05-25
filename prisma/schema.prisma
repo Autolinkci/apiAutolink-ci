@@ -1,32 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model users {
-  id            String    @id @default(uuid())
+  id            String         @id @default(uuid())
   full_name     String
-  email         String    @unique
+  email         String         @unique
   phone_number  String?
-  role          String    @default("client")
   password_hash String
-  created_at    DateTime  @default(now())
-  sellers       sellers?
+  created_at    DateTime       @default(now())
+  role          String         @default("client")
   orders        orders[]
+  sellers       sellers?
   testimonials  testimonials[]
 }
 
 model sellers {
-  id           String  @id @default(uuid())
-  user_id      String  @unique
+  id           String     @id @default(uuid())
+  user_id      String     @unique
   company_name String?
   country      String?
-  is_approved  Boolean @default(false)
-  user         users   @relation(fields: [user_id], references: [id])
+  is_approved  Boolean    @default(false)
+  user         users      @relation(fields: [user_id], references: [id])
   vehicles     vehicles[]
 }
 
@@ -37,24 +37,24 @@ model vehicles {
   model             String
   price             Float
   country_of_origin String
-  images            VehicleImage[]
   status            String         @default("available")
   seller_id         String?
-  seller            sellers?       @relation(fields: [seller_id], references: [id])
-  orders            orders[]
   year              Int
+  images            VehicleImage[]
+  orders            orders[]
+  seller            sellers?       @relation(fields: [seller_id], references: [id])
 }
 
 model orders {
-  id              String    @id @default(uuid())
+  id              String           @id @default(uuid())
   user_id         String
   vehicle_id      String
   estimated_total Float
-  status          String    @default("pending")
-  created_at      DateTime  @default(now())
-  user            users     @relation(fields: [user_id], references: [id])
-  vehicle         vehicles  @relation(fields: [vehicle_id], references: [id])
+  status          String           @default("pending")
+  created_at      DateTime         @default(now())
   tracking        order_tracking[]
+  user            users            @relation(fields: [user_id], references: [id])
+  vehicle         vehicles         @relation(fields: [vehicle_id], references: [id])
 }
 
 model order_tracking {
