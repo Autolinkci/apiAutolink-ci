@@ -88,10 +88,13 @@ export class VehiclesService {
     }
 
     // Sinon, utiliser le seller_id fourni (cas d'un admin)
+    if (!seller_id) {
+      throw new Error('seller_id is required');
+    }
     return this.prisma.vehicles.create({
       data: {
         ...data,
-        seller_id,
+        seller_id: seller_id,
       },
       include: {
         images: true,

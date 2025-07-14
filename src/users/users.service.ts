@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -50,8 +51,11 @@ export class UsersService {
 
     return this.prisma.users.create({
       data: {
-        ...rest,
         password_hash,
+        full_name: rest.full_name,
+        email: rest.email,
+        phone_number: rest.phone_number,
+        role: (rest.role as UserRole) ?? UserRole.client,
       },
       select: {
         id: true,
