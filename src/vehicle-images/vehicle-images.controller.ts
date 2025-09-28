@@ -1,6 +1,6 @@
-import { Controller, Delete, Get, Param, Post, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Request, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { VehicleImagesService } from './vehicle-images.service';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -14,21 +14,19 @@ export class VehicleImagesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'seller')
   @Post(':vehicleId')
-  @UseInterceptors(FileInterceptor('image'))
-  uploadImage(
-    @UploadedFile() file: Express.Multer.File,
+  @UseInterceptors(FilesInterceptor('images', 10)) // Maximum 10 images
+  uploadImages(
+    @UploadedFiles() files: Express.Multer.File[],
     @Param('vehicleId') vehicleId: string,
     @Request() req,
   ) {
-    const imageUrl = `uploads/vehicles/${file.filename}`;
-    
     if (req.user.role === 'admin') {
-      return this.vehicleImagesService.addImage(vehicleId, imageUrl);
+      return this.vehicleImagesService.addImages(vehicleId, files);
     }
     
-    return this.vehicleImagesService.addImage(
+    return this.vehicleImagesService.addImages(
       vehicleId,
-      imageUrl,
+      files,
       req.user.id,
       req.user.role,
     );

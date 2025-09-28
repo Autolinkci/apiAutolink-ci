@@ -7,7 +7,7 @@ import { ApplyCompanyDto } from './dto/apply-company.dto';
 
 @Injectable()
 export class SellersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async apply(userId: string, dto: CreateSellerDto) {
     // Vérifier si une candidature existe déjà
@@ -18,15 +18,20 @@ export class SellersService {
     });
   }
 
-  async applyCompany(dto: ApplyCompanyDto) {
+  async applyCompany(dto: ApplyCompanyDto,userId:string) {
+    // Vérifier si l'utilisateur a déjà une candidature
+    const existingUser = await this.prisma.sellers.findUnique({ where: { user_id: userId } });
+    if (existingUser) throw new ConflictException('Vous avez déjà une candidature en cours.');
+    
     // Vérifier si une entreprise avec ce nom existe déjà
-    const existing = await this.prisma.sellers.findFirst({
+    const existingCompany = await this.prisma.sellers.findFirst({
       where: {
         company_name: dto.company_name,
         is_company: true,
       }
     });
-    if (existing) throw new ConflictException('Entreprise déjà candidate.');
+    if (existingCompany) throw new ConflictException('Entreprise déjà candidate.');
+    
     return this.prisma.sellers.create({
       data: {
         company_name: dto.company_name,
@@ -35,6 +40,7 @@ export class SellersService {
         is_approved: false,
         email: dto.email,
         phone_number: dto.phone_number,
+        user_id: userId
       }
     });
   }

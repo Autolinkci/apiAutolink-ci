@@ -48,6 +48,59 @@ export class VehicleImagesService {
     });
   }
 
+  async addImages(vehicleId: string, files: Express.Multer.File[], userId?: string, role?: string) {
+    // Vérifier si le véhicule existe
+    const vehicle = await this.prisma.vehicles.findUnique({
+      where: { id: vehicleId },
+      include: {
+        seller: true,
+      },
+    });
+
+    if (!vehicle) {
+      // Supprimer tous les fichiers si le véhicule n'existe pas
+      files.forEach(file => {
+        fs.unlink(path.join(process.cwd(), `uploads/vehicles/${file.filename}`), (err) => {
+          if (err) console.error('Erreur lors de la suppression du fichier', err);
+        });
+      });
+      throw new NotFoundException(`Véhicule avec l'ID ${vehicleId} non trouvé`);
+    }
+
+    // Si l'utilisateur est un vendeur, vérifier s'il est le propriétaire du véhicule
+    if (role === 'seller' && userId) {
+      const seller = await this.prisma.sellers.findFirst({
+        where: { user_id: userId },
+      });
+
+      if (!seller || seller.id !== vehicle.seller_id) {
+        // Supprimer tous les fichiers si l'utilisateur n'est pas le propriétaire du véhicule
+        files.forEach(file => {
+          fs.unlink(path.join(process.cwd(), `uploads/vehicles/${file.filename}`), (err) => {
+            if (err) console.error('Erreur lors de la suppression du fichier', err);
+          });
+        });
+        throw new ForbiddenException('Vous ne pouvez pas ajouter d\'images à ce véhicule');
+      }
+    }
+
+    // Créer toutes les images en une seule transaction
+    const imageData = files.map(file => ({
+      url: `uploads/vehicles/${file.filename}`,
+      vehicleId,
+    }));
+
+    const createdImages = await this.prisma.vehicleImage.createMany({
+      data: imageData,
+    });
+
+    return {
+      message: `${files.length} image(s) ajoutée(s) avec succès`,
+      count: createdImages.count,
+      images: imageData,
+    };
+  }
+
   async removeImage(id: string, userId?: string, role?: string) {
     // Vérifier si l'image existe
     const image = await this.prisma.vehicleImage.findUnique({

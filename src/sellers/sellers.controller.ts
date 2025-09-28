@@ -22,9 +22,10 @@ export class SellersController {
   }
 
   // Postuler comme entreprise
+  @UseGuards(JwtAuthGuard)
   @Post('apply-company')
-  applyAsCompany(@Body() dto: ApplyCompanyDto) {
-    return this.sellersService.applyCompany(dto);
+  applyAsCompany(@Request() req, @Body() dto: ApplyCompanyDto) {
+    return this.sellersService.applyCompany(dto,req.user.id);
   }
 
   // Infos du vendeur connecté

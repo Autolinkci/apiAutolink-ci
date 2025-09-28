@@ -4,13 +4,7 @@ import { ROLES_KEY } from '../decorators/roles.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
 
 // Type augmenté pour les vendeurs
-interface SellerWithApproval {
-  id: string;
-  user_id: string;
-  company_name: string | null;
-  country: string | null;
-  is_approved: boolean;
-}
+
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -45,9 +39,9 @@ export class RolesGuard implements CanActivate {
       });
       
       // Utiliser l'interface étendue pour accéder à is_approved
-      const sellerWithApproval = seller as unknown as SellerWithApproval;
+      // const sellerWithApproval = seller as unknown as SellerWithApproval;
       
-      if (!seller || !sellerWithApproval.is_approved) {
+      if (!seller || !seller.is_approved) {
         throw new ForbiddenException('Votre compte vendeur n\'est pas approuvé');
       }
     }
