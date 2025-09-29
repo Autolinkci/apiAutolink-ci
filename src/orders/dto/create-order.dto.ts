@@ -10,13 +10,7 @@ export class CreateOrderDto {
   @IsNotEmpty()
   vehicle_id: string;
 
-  @ApiProperty({
-    description: 'Coût total estimé de la commande en FCFA',
-    example: 12500000
-  })
-  @IsNumber()
-  @IsPositive()
-  estimated_total: number;
+ 
 
   @ApiProperty({
     description: 'Statut de la commande',

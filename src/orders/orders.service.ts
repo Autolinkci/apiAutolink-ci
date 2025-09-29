@@ -86,11 +86,13 @@ export class OrdersService {
   }
 
   async create(createOrderDto: CreateOrderDto, userId: string) {
-    const { vehicle_id, estimated_total, status } = createOrderDto;
-
+    const { vehicle_id, status } = createOrderDto;
+//estimated_total, 
     // Vérifier si le véhicule existe et s'il est disponible
     const vehicle = await this.prisma.vehicles.findUnique({
-      where: { id: vehicle_id },
+      where: { id: vehicle_id,
+       },
+      
     });
 
     if (!vehicle) {
@@ -106,7 +108,8 @@ export class OrdersService {
       data: {
         vehicle_id,
         user_id: userId,
-        estimated_total,
+        estimated_total: vehicle.price,
+        
         status: status || 'pending',
         tracking: {
           create: {
